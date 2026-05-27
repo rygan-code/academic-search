@@ -276,6 +276,7 @@ node scripts/oa-pdf-download.mjs \
 
 - **开放获取列表与清单管理**：使用 `scripts/oa-pdf-download.mjs` 整理与批量下载开放获取（OA）文献。该工具严格遵循 OA 权限，不绕过任何付费墙。
 - **自动归档工作流**：使用 `scripts/download_paper.py` 执行自动下载。该工具支持多渠道混合下载，包含开放获取源及 Sci-Hub 动态镜像轮询（集成 Altcha PoW 人机验证破译），提供极高的穿透获取能力。
+- **双轨尝试机制**：当进行文献调研并要求获取全文时，智能体应发起“双轨并行”策略，同时运行这两个工具（`oa-pdf-download.mjs` 与 `download_paper.py`），一方面为用户清晰整理出合法合规的 OA 文献 Manifest 清单，另一方面借助混合渠道最大化获取全文并自动归档。
 - **复杂机构/多源下载需求**：如果用户需要集成企业 WebVPN、CARSI 机构登录或多源竞速，说明这超出了本 Skill 的范围，建议切换至专门的下载工具或使用机构图书馆服务。
 
 ### BibTeX 导出
