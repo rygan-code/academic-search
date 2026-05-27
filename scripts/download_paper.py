@@ -49,7 +49,7 @@ from science_skills.science_skills_common import http_client
 # Constants
 DEFAULT_DB_DIR = r"E:\literature database"
 FALLBACK_DB_DIR = r"C:\Users\52402\literature database"
-SCI_HUB_MIRRORS = ["https://sci-hub.se", "https://sci-hub.st", "https://sci-hub.ru"]
+SCI_HUB_MIRRORS = ["https://www.pismin.com", "https://sci-hub.se", "https://sci-hub.st", "https://sci-hub.ru"]
 MIN_PDF_SIZE_BYTES = 10240  # 10 KB
 
 # Clients with fixed base URLs
@@ -418,6 +418,14 @@ def is_captcha_or_blocked(html: str) -> bool:
   ]
   for keyword in block_keywords:
     if keyword in html_lower:
+      if keyword == "cloudflare" and "cloudflareinsights" in html_lower:
+        # Ignore cloudflare if it is only present as part of cloudflareinsights
+        if html_lower.count("cloudflare") == html_lower.count("cloudflareinsights"):
+          continue
+      if keyword == "robot" and "roboto" in html_lower:
+        # Ignore robot if it is only present as part of the roboto font family name
+        if html_lower.count("robot") == html_lower.count("roboto"):
+          continue
       return True
   return False
 
@@ -641,6 +649,8 @@ def try_download_scihub(doi: str) -> Optional[bytes]:
           )
           with opener.open(req_pdf, timeout=40) as resp_pdf:
             content = resp_pdf.read()
+            if not validate_pdf_content(content):
+              raise ValueError("Downloaded content is not a valid PDF")
         except Exception as e:
           print(f"Diagnostics: Failed to download from rerouted URL {target_pdf_url}: {e}", file=sys.stderr)
           if target_pdf_url != pdf_url:
