@@ -3,7 +3,7 @@
 ## 基础信息
 
 - 地址：`http://127.0.0.1:${CDP_PROXY_PORT:-3456}`
-- 启动：`CDP_PROXY_PORT=3456 node ~/.claude/skills/academic-search/scripts/cdp-proxy.mjs &`
+- 启动：`CDP_PROXY_PORT=3456 node ~/.gemini/config/skills/academic-search/scripts/cdp-proxy.mjs &`
 - 启动后持续运行，不建议主动停止（重启需 Chrome 重新授权）
 - 强制停止：`pkill -f cdp-proxy.mjs`
 - 健康检查：`curl -s "http://127.0.0.1:${CDP_PROXY_PORT:-3456}/health"`

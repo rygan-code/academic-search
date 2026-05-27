@@ -38,8 +38,8 @@ Compared with generic WebSearch and WebFetch, this skill focuses on three things
 ## Quick Start
 
 ```bash
-git clone https://github.com/Mingyue-Cheng/academic-search ~/.claude/skills/academic-search
-bash ~/.claude/skills/academic-search/scripts/check-deps.sh
+git clone https://github.com/Mingyue-Cheng/academic-search ~/.gemini/config/skills/academic-search
+bash ~/.gemini/config/skills/academic-search/scripts/check-deps.sh
 ```
 
 Once installed, you can immediately ask Claude Code to perform an academic search task, for example:
@@ -150,14 +150,14 @@ Install this skill for me: https://github.com/Mingyue-Cheng/academic-search
 **Option 2: Manual**
 
 ```bash
-git clone https://github.com/Mingyue-Cheng/academic-search ~/.claude/skills/academic-search
+git clone https://github.com/Mingyue-Cheng/academic-search ~/.gemini/config/skills/academic-search
 ```
 
 **Option 3: Local symlink (for development)**
 
 ```bash
 # Run inside the academic-search/ directory
-ln -sfn "$(pwd)" ~/.claude/skills/academic-search
+ln -sfn "$(pwd)" ~/.gemini/config/skills/academic-search
 ```
 
 ## Requirements
@@ -172,7 +172,7 @@ CDP mode requires **Node.js 22+** and Chrome remote debugging:
 Environment check (the agent runs this automatically — no need to run manually):
 
 ```bash
-bash ~/.claude/skills/academic-search/scripts/check-deps.sh
+bash ~/.gemini/config/skills/academic-search/scripts/check-deps.sh
 ```
 
 ## Testing
@@ -308,7 +308,7 @@ The Proxy connects to Chrome via WebSocket (compatible with the `chrome://inspec
 
 ```bash
 # The agent manages the Proxy lifecycle automatically — no manual startup needed
-bash ~/.claude/skills/academic-search/scripts/check-deps.sh
+bash ~/.gemini/config/skills/academic-search/scripts/check-deps.sh
 
 # Page operations
 curl -s "http://127.0.0.1:${CDP_PROXY_PORT:-3456}/new?url=https://scholar.google.com"           # Open new tab

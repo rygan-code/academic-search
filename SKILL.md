@@ -13,7 +13,7 @@ metadata:
 在开始前，检查环境就绪状态：
 
 ```bash
-bash ~/.claude/skills/academic-search/scripts/check-deps.sh
+bash ~/.gemini/config/skills/academic-search/scripts/check-deps.sh
 ```
 
 - **Node.js 22+**：必需（用于 CDP 浏览器模式）。仅使用 API 平台时可不检查。
@@ -235,11 +235,11 @@ curl -s "https://api.semanticscholar.org/graph/v1/paper/ARXIV:{arxiv_id}?fields=
 
 ### 开放 PDF 下载与 manifest 导出
 
-Academic-Search 可以下载合法开放访问 PDF，但边界必须清楚：
+Academic-Search 的批量 OA 清单管理器（`scripts/oa-pdf-download.mjs`）仅负责获取与下载合法开放获取 PDF，其边界必须清楚：
 
 - 只下载 `full_text_status="open_pdf"` 且存在 `pdf_url` 的论文。
-- 不得调用 Sci-Hub、LibGen、shadow library、WebVPN、CARSI、Tor 或 Cloudflare 绕过工具。
-- 遇到 `needs_institution`、`no_open_pdf`、`anti_bot_blocked`、`html_not_pdf`、`unknown` 时，不下载，只写入 manifest 并说明原因。
+- 该脚本不得调用 Sci-Hub、LibGen、shadow library、WebVPN、CARSI、Tor 或 Cloudflare 绕过工具。
+- 遇到 `needs_institution`、`no_open_pdf`、`anti_bot_blocked`、`html_not_pdf`、`unknown` 时，该脚本不下载，只写入 manifest 并说明原因。
 - 批量任务先生成 manifest，再由用户确认是否下载，除非用户明确要求“下载所有开放 PDF”。
 
 推荐流程：
@@ -272,14 +272,11 @@ node scripts/oa-pdf-download.mjs \
 
 `download_status` 枚举：`not_requested`、`eligible`、`downloaded`、`skipped`、`failed`、`not_pdf`。详细字段定义见 `references/metadata-schema.md`。
 
-分工规则：
+分工与工具选择规则：
 
-- 用户要“找论文 / 筛论文 / 查引用 / 生成开放 PDF 清单” → 使用 Academic-Search。
-- 用户要“尽可能下载这些 DOI 的 PDF / 用 WebVPN / 多源下载 / Sci-Hub / LibGen” → 明确说明这超出 Academic-Search 边界，并建议切换 scansci-pdf。
-
-如果用户需要下载非开放获取论文，应建议使用机构图书馆、作者邮件、馆际互借，或切换到 scansci-pdf 这类专门的论文获取工具；Academic-Search 不负责绕过访问限制。
-
-不要尝试访问任何需要绕过付费墙的第三方服务。遇到 Elsevier、Wiley、Springer、ACS、Taylor & Francis、JSTOR 等商业出版平台时，先判定开放获取状态；若需要机构访问，停止自动下载并报告 `needs_institution`。
+- **开放获取列表与清单管理**：使用 `scripts/oa-pdf-download.mjs` 整理与批量下载开放获取（OA）文献。该工具严格遵循 OA 权限，不绕过任何付费墙。
+- **自动归档工作流**：使用 `scripts/download_paper.py` 执行自动下载。该工具支持多渠道混合下载，包含开放获取源及 Sci-Hub 动态镜像轮询（集成 Altcha PoW 人机验证破译），提供极高的穿透获取能力。
+- **复杂机构/多源下载需求**：如果用户需要集成企业 WebVPN、CARSI 机构登录或多源竞速，说明这超出了本 Skill 的范围，建议切换至专门的下载工具或使用机构图书馆服务。
 
 ### BibTeX 导出
 
@@ -311,7 +308,7 @@ Google Scholar 作者页需 CDP，见 `references/site-patterns/scholar.google.c
 ### 启动
 
 ```bash
-bash ~/.claude/skills/academic-search/scripts/check-deps.sh
+bash ~/.gemini/config/skills/academic-search/scripts/check-deps.sh
 ```
 
 脚本自动检查并启动 CDP Proxy（默认 `127.0.0.1:3456`，可通过 `CDP_PROXY_PORT` 覆盖）。
@@ -369,6 +366,31 @@ curl -s "http://127.0.0.1:${CDP_PROXY_PORT:-3456}/close?target=$TARGET"
 **多平台并发查同一论文时的去重**：
 
 子 Agent 返回结果后，主 Agent 按 `references/metadata-schema.md` 中的去重规则合并：DOI 为主键 → arXiv ID 次之 → 标题+年份模糊匹配。
+
+## 文献自动化下载与 Markdown 转换工作流 (Workflow)
+
+当用户请求进行文献检索、综述调研或论文收集，且完成初步筛选后，Agent **必须全自动且无需用户干预地**执行以下 PDF 下载、Markdown 转换及索引标记流程：
+
+1. **提取标识符**：从筛选出的核心论文列表中提取其 DOI 或 arXiv ID。
+2. **执行多渠道下载并登记为未处理**：
+   - 运行下载命令：`python scripts/download_paper.py --doi <DOI>` 或 `python scripts/download_paper.py --id <arXiv_ID>`。
+   - 该脚本默认下载至 `E:\literature database`（若 E 盘无法写入，会自动降级至 `C:\Users\52402\literature database`）。
+   - 下载的 PDF 会自动存入子目录 `pdf/unprocessed/` 下，文件统一命名为 `年份-作者-标题.pdf`（已自动清洗非法字符）。
+   - 脚本会自动在文献库根目录创建或更新 `index.md` 索引文件，追加一条记录且将状态登记为 `未处理 (Unprocessed)`，简介登记为 `-`。
+   - 如果本地已存在该命名的健康 PDF（无论在 `pdf/unprocessed` 还是 `pdf/processed` 目录），脚本将直接跳过下载并返回对应的路径。
+3. **调用 MinerU MCP 服务转换**：
+   - 如果下载成功（脚本返回 `"status": "success"` 或 `"status": "skipped"`，并给出 PDF 文件路径），Agent **必须立刻调用本地注册的 `mineru` MCP 工具**，将该 PDF 转换为 Markdown 格式文本。
+   - Agent **必须将转换生成的 Markdown 文本保存至** `E:\literature database\md\年份-作者-标题.md`（若 E 盘无法写入，则保存至 `C:\Users\52402\literature database\md\年份-作者-标题.md`）。
+4. **生成简介并标记处理完成**：
+   - Markdown 转换成功后，Agent 应通读或阅读生成的 Markdown 文本/摘要，**用三句话精炼概括这篇论文的内容与贡献**（形成简介）。
+   - 接着，Agent **必须运行标记处理完成命令**：
+     `python scripts/download_paper.py --mark_processed --filename "<文件名.pdf>" --summary "<三句话简介>"`
+   - 该命令会自动将 PDF 文件从 `pdf/unprocessed/` 移动至 `pdf/processed/` 目录下，并自动将根目录下 `index.md` 索引文件中对应行的状态更新为 `已处理 (Processed)`，同时填入三句话简介与更新时间。
+5. **统一向用户汇报**：
+   - 在文献调研的最终回答中，向用户展示：
+     - 已成功下载、转换并标记已处理的论文列表（包括每篇论文 the 本地 PDF 路径、Markdown 路径以及三句话简介）。
+     - 下载/转换/标记失败的文献清单。
+     - 本地索引文件 `index.md` 的真实存储路径。
 
 ## 信息核实
 

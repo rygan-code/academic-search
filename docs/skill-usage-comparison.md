@@ -7,7 +7,7 @@
 
 ## 一、背景
 
-`academic-search` Skill 安装在 `~/.claude/skills/academic-search/`，包含：
+`academic-search` Skill 安装在 `~/.gemini/config/skills/academic-search/`，包含：
 - `SKILL.md`：搜索哲学、平台选择矩阵、两遍搜索策略
 - `references/venue-rankings.md`：CS 会议/期刊 CCF 分级速查
 - `references/site-patterns/semanticscholar.org.md`：S2 平台经验（字段陷阱、API 模式）

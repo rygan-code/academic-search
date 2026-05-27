@@ -382,7 +382,7 @@ curl -s -A "Mozilla/5.0" "https://ieeexplore.ieee.org/document/9607200/"
 
 ```bash
 # 1. 确保 CDP Proxy 就绪
-bash ~/.claude/skills/academic-search/scripts/check-deps.sh
+bash ~/.gemini/config/skills/academic-search/scripts/check-deps.sh
 
 # 2. 打开 Google Scholar 搜索页
 TARGET=$(curl -s "http://127.0.0.1:${CDP_PROXY_PORT:-3456}/new?url=https://scholar.google.com" | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).targetId")
@@ -433,7 +433,7 @@ curl -s "http://127.0.0.1:${CDP_PROXY_PORT:-3456}/close?target=$TARGET"
 
 ```bash
 # 1. 确保 CDP Proxy 就绪
-bash ~/.claude/skills/academic-search/scripts/check-deps.sh
+bash ~/.gemini/config/skills/academic-search/scripts/check-deps.sh
 
 # 2. 打开知网检索页（KNS8 新版界面）
 TARGET=$(curl -s "http://127.0.0.1:${CDP_PROXY_PORT:-3456}/new?url=https://kns.cnki.net/kns8/defaultresult/index" \
